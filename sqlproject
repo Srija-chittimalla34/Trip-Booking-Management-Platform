@@ -1,0 +1,237 @@
+/*
+==================================================================================
+Travel Booking System (TBS) Project
+==================================================================================
+
+Project Overview: Travel Booking System
+--------------------------------------------
+A. Database Design
+    -- Database Name: TravelDB
+
+B. Tables:
+    -- Customers: Stores customer details.
+    -- Destinations: Stores travel destination details.
+    -- Flights: Stores flight information.
+    -- Hotels: Stores hotel information.
+    -- Bookings: Stores booking details (flight/hotel).
+    -- Payments: Stores payment records.
+
+C. Insert Sample Data:
+    -- Populate each table with sample data.
+
+D. Write Queries:
+    -- Retrieve data (customers, bookings, payments).
+    -- Aggregations (total bookings, revenue per airline/hotel).
+    -- Join tables for comprehensive reports.
+    -- Use subqueries and CTEs for analysis.
+*/
+
+/* LET'S GET STARTED */
+
+-- Create the database
+CREATE DATABASE TravelDB;
+GO
+
+-- Use the database
+USE TravelDB;
+GO
+
+-- Create the Customers table
+CREATE TABLE Customers (
+    CustomerID INT PRIMARY KEY IDENTITY(1,1),
+    FirstName NVARCHAR(50),
+    LastName NVARCHAR(50),
+    Email NVARCHAR(100),
+    Phone NVARCHAR(15),
+    Address NVARCHAR(255),
+    City NVARCHAR(50),
+    Country NVARCHAR(50),
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+-- Create the Destinations table
+CREATE TABLE Destinations (
+    DestinationID INT PRIMARY KEY IDENTITY(1,1),
+    City NVARCHAR(50),
+    Country NVARCHAR(50),
+    Description NVARCHAR(255)
+);
+
+-- Create the Flights table
+CREATE TABLE Flights (
+    FlightID INT PRIMARY KEY IDENTITY(1,1),
+    Airline NVARCHAR(100),
+    FlightNumber NVARCHAR(20),
+    DepartureCity NVARCHAR(50),
+    ArrivalCity NVARCHAR(50),
+    DepartureDate DATE,
+    Price DECIMAL(10,2)
+);
+
+-- Create the Hotels table
+CREATE TABLE Hotels (
+    HotelID INT PRIMARY KEY IDENTITY(1,1),
+    HotelName NVARCHAR(100),
+    City NVARCHAR(50),
+    Country NVARCHAR(50),
+    PricePerNight DECIMAL(10,2)
+);
+
+-- Create the Bookings table
+CREATE TABLE Bookings (
+    BookingID INT PRIMARY KEY IDENTITY(1,1),
+    CustomerID INT,
+    FlightID INT NULL,
+    HotelID INT NULL,
+    BookingDate DATE,
+    Status NVARCHAR(20) DEFAULT 'Pending',
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
+    FOREIGN KEY (FlightID) REFERENCES Flights(FlightID),
+    FOREIGN KEY (HotelID) REFERENCES Hotels(HotelID)
+);
+
+-- Create the Payments table
+CREATE TABLE Payments (
+    PaymentID INT PRIMARY KEY IDENTITY(1,1),
+    BookingID INT,
+    Amount DECIMAL(10,2),
+    PaymentDate DATE,
+    PaymentMethod NVARCHAR(50),
+    FOREIGN KEY (BookingID) REFERENCES Bookings(BookingID)
+);
+
+-- Insert sample data into Destinations
+INSERT INTO Destinations(City, Country, Description)
+VALUES
+('Paris', 'France', 'City of Lights'),
+('New York', 'USA', 'The Big Apple'),
+('Tokyo', 'Japan', 'Land of the Rising Sun'),
+('Sydney', 'Australia', 'Harbour City'),
+('Dubai', 'UAE', 'City of Skyscrapers');
+
+-- Insert sample data into Flights
+INSERT INTO Flights(Airline, FlightNumber, DepartureCity, ArrivalCity, DepartureDate, Price)
+VALUES
+('Air France', 'AF123', 'London', 'Paris', '2025-09-25', 350),
+('Delta Airlines', 'DL456', 'Chicago', 'New York', '2025-09-26', 220),
+('Japan Airlines', 'JL789', 'Seoul', 'Tokyo', '2025-09-27', 400),
+('Qantas', 'QF101', 'Melbourne', 'Sydney', '2025-09-28', 180),
+('Emirates', 'EK202', 'Mumbai', 'Dubai', '2025-09-29', 500);
+
+-- Insert sample data into Hotels
+INSERT INTO Hotels(HotelName, City, Country, PricePerNight)
+VALUES
+('Hotel Parisian', 'Paris', 'France', 150),
+('NYC Grand Hotel', 'New York', 'USA', 200),
+('Tokyo Inn', 'Tokyo', 'Japan', 180),
+('Sydney Harbour Hotel', 'Sydney', 'Australia', 220),
+('Dubai Luxury Suites', 'Dubai', 'UAE', 300);
+
+-- Insert sample data into Customers
+INSERT INTO Customers(FirstName, LastName, Email, Phone, Address, City, Country)
+VALUES
+('Alice', 'Walker', 'alice@example.com', '9876501234', '123 Main St', 'London', 'UK'),
+('Bob', 'Miller', 'bob@example.com', '9876505678', '456 Oak St', 'Chicago', 'USA'),
+('Charlie', 'Lee', 'charlie@example.com', '9876509101', '789 Pine St', 'Seoul', 'South Korea'),
+('David', 'Johnson', 'david@example.com', '9876501213', '321 Maple St', 'Melbourne', 'Australia'),
+('Eva', 'Brown', 'eva@example.com', '9876501415', '654 Cedar St', 'Mumbai', 'India');
+
+-- Insert sample data into Bookings
+INSERT INTO Bookings(CustomerID, FlightID, HotelID, BookingDate)
+VALUES
+(1, 1, 1, '2025-09-20'),
+(2, 2, 2, '2025-09-21'),
+(3, 3, 3, '2025-09-22'),
+(4, 4, 4, '2025-09-23'),
+(5, 5, 5, '2025-09-24');
+
+-- Insert sample data into Payments
+INSERT INTO Payments(BookingID, Amount, PaymentDate, PaymentMethod)
+VALUES
+(1, 500, '2025-09-20', 'Credit Card'),
+(2, 420, '2025-09-21', 'Debit Card'),
+(3, 580, '2025-09-22', 'PayPal'),
+(4, 400, '2025-09-23', 'Credit Card'),
+(5, 800, '2025-09-24', 'UPI');
+
+-- Example Queries
+-- Query 1: List all customers
+SELECT * FROM Customers;
+
+-- Query 2: List all bookings with customer, flight, and hotel details
+SELECT b.BookingID, c.FirstName + ' ' + c.LastName AS CustomerName,
+       f.Airline, f.FlightNumber, h.HotelName, b.BookingDate, b.Status
+FROM Bookings b
+JOIN Customers c ON b.CustomerID = c.CustomerID
+LEFT JOIN Flights f ON b.FlightID = f.FlightID
+LEFT JOIN Hotels h ON b.HotelID = h.HotelID;
+
+-- Query 3: Total revenue generated by each airline
+SELECT f.Airline, SUM(p.Amount) AS TotalRevenue
+FROM Payments p
+JOIN Bookings b ON p.BookingID = b.BookingID
+JOIN Flights f ON b.FlightID = f.FlightID
+GROUP BY f.Airline;
+
+-- Query 4: Upcoming flights in the next 7 days
+SELECT * FROM Flights
+WHERE DepartureDate BETWEEN GETDATE() AND DATEADD(DAY, 7, GETDATE());
+
+-- Query 5: Customers with more than one booking
+SELECT c.CustomerID, c.FirstName + ' ' + c.LastName AS CustomerName, COUNT(b.BookingID) AS BookingCount
+FROM Bookings b
+JOIN Customers c ON b.CustomerID = c.CustomerID
+GROUP BY c.CustomerID, c.FirstName, c.LastName
+HAVING COUNT(b.BookingID) > 1;
+
+-- Stored Procedure Example: Add Booking
+CREATE PROCEDURE AddBooking
+    @CustomerID INT,
+    @FlightID INT = NULL,
+    @HotelID INT = NULL,
+    @BookingDate DATE
+AS
+BEGIN
+    INSERT INTO Bookings(CustomerID, FlightID, HotelID, BookingDate)
+    VALUES(@CustomerID, @FlightID, @HotelID, @BookingDate);
+END;
+
+-- Trigger Example: Automatically mark booking as 'Confirmed' after payment
+CREATE TRIGGER trg_UpdateBookingStatus
+ON Payments
+AFTER INSERT
+AS
+BEGIN
+    UPDATE b
+    SET b.Status = 'Confirmed'
+    FROM Bookings b
+    JOIN inserted i ON b.BookingID = i.BookingID;
+END;
+
+-- View Example: Customer Booking Details
+CREATE VIEW vw_CustomerBookings AS
+SELECT c.CustomerID, c.FirstName, c.LastName, f.Airline, h.HotelName,
+       b.BookingDate, p.Amount, p.PaymentMethod
+FROM Bookings b
+JOIN Customers c ON b.CustomerID = c.CustomerID
+LEFT JOIN Flights f ON b.FlightID = f.FlightID
+LEFT JOIN Hotels h ON b.HotelID = h.HotelID
+JOIN Payments p ON b.BookingID = p.BookingID;
+
+-- Index Example: Speed up queries on FlightID in Bookings
+CREATE NONCLUSTERED INDEX IDX_Bookings_FlightID ON Bookings(FlightID);
+
+-- Security / RBAC Example
+-- Create login
+CREATE LOGIN TravelUser WITH PASSWORD = 'StrongPassword123';
+USE TravelDB;
+GO
+-- Create user
+CREATE USER TravelUser FOR LOGIN TravelUser;
+-- Create role
+CREATE ROLE AgentRole;
+-- Grant permissions
+GRANT SELECT, INSERT ON Customers TO AgentRole;
+GRANT SELECT, INSERT ON Bookings TO AgentRole;
+-- Add user to role
+EXEC sp_addrolemember 'AgentRole', 'TravelUser';
